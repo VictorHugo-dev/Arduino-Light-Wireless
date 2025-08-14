@@ -1,12 +1,12 @@
 #include <WiFi.h>
 
 // ======== Wi-Fi Credentials ========
-const char* ssid = "Victor Hugo";
-const char* password = "12345678";
+const char* ssid = "ssid";
+const char* password = "password";
 
 // ======== GPIO Setup ========
-const int lampPin = 5; // GPIO connected to transistor base resistor
-bool lampState = false; // false = off, true = on
+const int lampPin = 5; 
+bool lampState = false; 
 
 WiFiServer server(80);
 
@@ -15,14 +15,13 @@ void setup() {
   pinMode(lampPin, OUTPUT);
   digitalWrite(lampPin, LOW);
 
-  // Connect to Wi-Fi
   WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
+  Serial.print("Conectando ao WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\nConnected!");
+  Serial.println("\nConectado!");
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
 
@@ -36,47 +35,46 @@ void loop() {
   String request = client.readStringUntil('\r');
   client.flush();
 
-  // Toggle request
   if (request.indexOf("/toggle") != -1) {
     lampState = !lampState;
     digitalWrite(lampPin, lampState ? HIGH : LOW);
   }
 
-  // ======== HTML with Modern Styling ========
-  String html = 
-    "<!DOCTYPE html><html lang='en'>"
-    "<head>"
-    "<meta charset='UTF-8'>"
-    "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-    "<title>Lampada Wireless</title>"
-    "<style>"
-    "body {"
-    "  margin:0; padding:0; font-family:Arial, sans-serif;"
-    "  background:linear-gradient(135deg, #2c3e50, #4ca1af);"
-    "  height:100vh; display:flex; justify-content:center; align-items:center;"
-    "  color:white;"
-    "}"
-    ".container { text-align:center; }"
-    "h1 { font-size:2.5em; margin-bottom:30px; }"
-    ".button {"
-    "  padding:20px 60px; font-size:1.5em; border:none; border-radius:50px;"
-    "  background:" + String(lampState ? "#e74c3c" : "#2ecc71") + ";"
-    "  color:white; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3);"
-    "  transition: all 0.3s ease;"
-    "}"
-    ".button:hover { transform:scale(1.05); opacity:0.9; }"
-    "</style>"
-    "</head>"
-    "<body>"
-    "<div class='container'>"
-    "<h1>Lampada está " + String(lampState ? "Ligada" : "Desligada") + "</h1>"
-    "<form action='/toggle' method='GET'>"
-    "<button class='button'>" + String(lampState ? "Desligar" : "Ligar") + "</button>"
-    "</form>"
-    "</div>"
-    "</body></html>";
+  // ======== HTML ========
+  String html =
+"<!DOCTYPE html>"
+"<html lang='pt-BR'>"
+"<head>"
+"<meta charset='UTF-8'>"
+"<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+"<title>Controle de Lâmpada ESP32</title>"
+"<link href='https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap' rel='stylesheet'>"
+"<style>"
+"body {margin:0;padding:0;font-family:'Roboto',sans-serif;font-weight:700;background:linear-gradient(145deg,#1e293b,#0f172a);height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;}"
+"h1 {font-size:2em;margin-bottom:40px;text-align:center;}"
+".switch {position:relative;width:60px;height:120px;background:#555;border-radius:50px;cursor:pointer;transition:background 0.3s ease;box-shadow:inset -4px -4px 10px rgba(0,0,0,0.3),inset 4px 4px 10px rgba(255,255,255,0.05);}"
+".switch::before {content:'';position:absolute;top:6px;left:6px;width:48px;height:48px;background:#ccc;border-radius:50%;transition:all 0.3s ease;box-shadow:0 4px 10px rgba(0,0,0,0.3);}"
+".switch.on {background:#4ade80;box-shadow:0 0 20px rgba(74,222,128,0.5);}"
+".switch.on::before {top:66px;background:#fff;}"
+".switch:active::before {transform:scale(0.9);}"
+"</style>"
+"</head>"
+"<body>"
+"<h1 id='lamp-status'>" + String(lampState ? "Lâmpada ligada" : "Lâmpada desligada") + "</h1>"
+"<form id='lamp-form' action='/toggle' method='GET'>"
+"<div id='lamp-switch' class='switch" + String(lampState ? " on" : "") + "'></div>"
+"</form>"
+"<script>"
+"const switchBtn=document.getElementById('lamp-switch');"
+"const statusText=document.getElementById('lamp-status');"
+"const form=document.getElementById('lamp-form');"
+"switchBtn.addEventListener('click',(e)=>{e.preventDefault();switchBtn.classList.toggle('on');"
+"if(switchBtn.classList.contains('on')){statusText.textContent='Lâmpada ligada';}else{statusText.textContent='Lâmpada desligada';}"
+"form.submit();});"
+"</script>"
+"</body>"
+"</html>";
 
-  // Send HTTP response
   client.println("HTTP/1.1 200 OK");
   client.println("Content-type:text/html");
   client.println();
